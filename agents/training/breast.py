@@ -1,19 +1,121 @@
 from net_models import MLP
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
+import medmnist
+from medmnist import INFO, BreastMNIST
+
+# get device we are going to do the operations with
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-IN_DIM = 1 * 28 * 28   # grayscale 28x28 image
+# INFO contains metadata about all the medmnist datasets
+data_flag = "breastmnist"
+info = INFO[data_flag]          # metadata dict
+n_channels = info["n_channels"] # should be 1
+n_classes = len(info["label"])  # should be 2
+
+# transforms basically just lets you do stuff with the images in the dataset, nn expects tensor, not image file
+# can also do cropping stuff with transforms
+# so here transform becomes a composition of functions
+# ie transform(x) = Normalize(ToTensor(x)) where x is raw image
+transform = transforms.Compose([
+    transforms.ToTensor(),              # (H, W, C) -> (C, H, W) in [0,1]
+    transforms.Normalize(mean=[.5], std=[.5])
+])
+
+# creating BreastMNIST 2d dataset object for each training, training, eval, and testing all separate
+# also downloads the dataset if not already there
+# loads arrays of images+labels into memory
+# they overrode __getitem__ such that train_ds[i] actually applies the transform we define before returning image
+train_ds = BreastMNIST(split="train", transform=transform, download=True)
+val_ds   = BreastMNIST(split="val",   transform=transform, download=True)
+test_ds  = BreastMNIST(split="test",  transform=transform, download=True)
+# ----
+
+# DataLoader takes DataSet object, batches its stuff and shuffles it, DataSet knows how to return 1 object at a time
+# where DataLoader can work with batches
+# dataloader takes list of images and labels, randomly samples them into batches (shuffle), gives us list of batches
+# the batches now have transformed images since the DataLoader calls __getitem__ on the DataSet
+train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
+val_loader   = DataLoader(val_ds,   batch_size=64, shuffle=False)
+test_loader  = DataLoader(test_ds,  batch_size=64, shuffle=False)
+
+# so train_loader[i] is (ith batch_x, ith batch_y) where in this case batch_x is batch of image tensors (32,1,28,28)
+# and batch_y is batch of labels (32,)
+# -----
+
+# constants
+IN_DIM = n_channels * 28 * 28   # 1 * 28 * 28, flattened tensor so we have 28*28=784 inputs coming into nodes
+#so first weight matrix is [28*28x10]
 HIDDEN = [10, 10]
+#last weight matrix is 10x2
+OUT_DIM = n_classes # 2, yes or no
+#--------
 
-OUT_DIM = 2 # yes or no
 model = MLP(IN_DIM, HIDDEN, OUT_DIM, act="relu").to(device)
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss() # criterion is now a torch loss function object
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) # object that actually updates the parameters
 
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+# logits = model(x)
+# loss = criterion(logits, y_expected)
+# loss.backward() fills in param.gradient for each parameter
+# optimizer.step updates the weights based on their gradient
 
-# torch image tensors follow standard format (batch_size, channels (color), height, width)
-x = torch.randn(32, 1, 28, 28, device=device)    # BreastMNIST shape
-logits = model(x)
-print("Logits shape:", logits.shape)
+# -------------
+
+def run_epoch(loader, train=True):
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for x, y in loader:
+        # x: (B, 1, 28, 28), y: (B, 1) or (B,)
+        x = x.to(device)
+        y = y.squeeze().long().to(device)   # make sure shape is (B,)
+
+        # flatten images for MLP: (B, 1, 28, 28) -> (B, 784)
+        x_flat = x.view(x.size(0), -1)
+
+        if train:
+            optimizer.zero_grad()
+
+        logits = model(x_flat)              # (B, 2)
+        loss = criterion(logits, y)
+
+        if train:
+            loss.backward()
+            optimizer.step()
+
+        running_loss += loss.item() * x.size(0)
+        preds = logits.argmax(dim=1)
+        correct += (preds == y).sum().item()
+        total += x.size(0)
+
+    avg_loss = running_loss / total
+    acc = correct / total
+    return avg_loss, acc
+
+EPOCHS = 5
+
+for epoch in range(1, EPOCHS + 1):
+    train_loss, train_acc = run_epoch(train_loader, train=True)
+    val_loss, val_acc     = run_epoch(val_loader,   train=False)
+
+    print(
+        f"Epoch {epoch:02d} | "
+        f"train_loss={train_loss:.4f}, train_acc={train_acc:.3f} | "
+        f"val_loss={val_loss:.4f},   val_acc={val_acc:.3f}"
+    )
+
+# -------------------
+# 5) Final test accuracy
+# -------------------
+test_loss, test_acc = run_epoch(test_loader, train=False)
+print(f"Test: loss={test_loss:.4f}, acc={test_acc:.3f}")
