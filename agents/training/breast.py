@@ -11,10 +11,21 @@ from medmnist import INFO, BreastMNIST
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # INFO contains metadata about all the medmnist datasets
+#data_flag drives everything. Change it to one of these options to create the models.
+#  1. breastmnist    - breast tumor ultrasound
+#  2. pneumoniamnist - chest X-ray pneumonia detection
+#  3. octmnist       - retinal OCT disease grading
+#  4. dermamnist     - skin lesion classification (RGB)
+#  5. pathmnist      - colon histopathology (RGB)
 data_flag = "breastmnist"
 info = INFO[data_flag]          # metadata dict
 n_channels = info["n_channels"] # should be 1
 n_classes = len(info["label"])  # should be 2
+
+# this dynamically gets the dataset from medmnist using info metadata
+# for data_flag of "breastmnist", info["python_class"] == "BreastMNIST"
+# for data_flag of "pneumoniamnist",  "PneumoniaMNIST", etc. so we can JUST change data_flag
+DataClass = getattr(medmnist, info["python_class"])
 
 # transforms basically just lets you do stuff with the images in the dataset, nn expects tensor, not image file
 # can also do cropping stuff with transforms
@@ -22,16 +33,17 @@ n_classes = len(info["label"])  # should be 2
 # ie transform(x) = Normalize(ToTensor(x)) where x is raw image
 transform = transforms.Compose([
     transforms.ToTensor(),              # (H, W, C) -> (C, H, W) in [0,1]
-    transforms.Normalize(mean=[.5], std=[.5])
+    transforms.Normalize(mean=[0.5] * n_channels, std=[0.5] * n_channels) #this is normalized on the number of channels dynamically, instead of always assuming 1. 
 ])
 
-# creating BreastMNIST 2d dataset object for each training, training, eval, and testing all separate
+# creating 2d dataset object for each training, training, eval, and testing all separate
 # also downloads the dataset if not already there
 # loads arrays of images+labels into memory
 # they overrode __getitem__ such that train_ds[i] actually applies the transform we define before returning image
-train_ds = BreastMNIST(split="train", transform=transform, download=True)
-val_ds   = BreastMNIST(split="val",   transform=transform, download=True)
-test_ds  = BreastMNIST(split="test",  transform=transform, download=True)
+#DataClass is figured out above from the data_flag. This is where the information actually comes from.
+train_ds = DataClass(split="train", transform=transform, download=True)
+val_ds   = DataClass(split="val",   transform=transform, download=True)
+test_ds  = DataClass(split="test",  transform=transform, download=True)
 # ----
 
 # DataLoader takes DataSet object, batches its stuff and shuffles it, DataSet knows how to return 1 object at a time
@@ -114,8 +126,11 @@ for epoch in range(1, EPOCHS + 1):
         f"val_loss={val_loss:.4f},   val_acc={val_acc:.3f}"
     )
 
-# -------------------
-# 5) Final test accuracy
-# -------------------
+# final test accuracy
 test_loss, test_acc = run_epoch(test_loader, train=False)
 print(f"Test: loss={test_loss:.4f}, acc={test_acc:.3f}")
+
+# save the model with dataset-specific name (data_flag)
+save_name = f"{data_flag}_mlp.pth"
+torch.save(model.state_dict(), save_name)
+print(f"Saved model weights to {save_name}")
