@@ -1,11 +1,14 @@
 from net_models import MLP
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 
 import medmnist
 from medmnist import INFO, BreastMNIST
+
+#use this to test if it's actually working with a small network instead.
+DEBUG = True
 
 # get device we are going to do the operations with
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,7 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #  3. octmnist       - retinal OCT disease grading
 #  4. dermamnist     - skin lesion classification (RGB)
 #  5. pathmnist      - colon histopathology (RGB)
-data_flag = "breastmnist"
+data_flag = "pneumoniamnist"
 info = INFO[data_flag]          # metadata dict
 n_channels = info["n_channels"] # should be 1
 n_classes = len(info["label"])  # should be 2
@@ -26,6 +29,13 @@ n_classes = len(info["label"])  # should be 2
 # for data_flag of "breastmnist", info["python_class"] == "BreastMNIST"
 # for data_flag of "pneumoniamnist",  "PneumoniaMNIST", etc. so we can JUST change data_flag
 DataClass = getattr(medmnist, info["python_class"])
+
+#FOR TESTING
+if DEBUG:
+    print(f"\n=== Dataset: {data_flag} ===")
+    print(f"n_channels = {n_channels}")
+    print(f"n_classes  = {n_classes}")
+    print(f"Using DataClass: {DataClass.__name__}")
 
 # transforms basically just lets you do stuff with the images in the dataset, nn expects tensor, not image file
 # can also do cropping stuff with transforms
@@ -46,6 +56,22 @@ val_ds   = DataClass(split="val",   transform=transform, download=True)
 test_ds  = DataClass(split="test",  transform=transform, download=True)
 # ----
 
+#WHEN TESTING, ONLY USE SUBSETS.
+if DEBUG:
+    # use only small subsets so it's super fast
+    train_indices = list(range(256))   # first 256 samples
+    val_indices   = list(range(64))
+    test_indices  = list(range(64))
+
+    train_ds = Subset(train_ds, train_indices)
+    val_ds   = Subset(val_ds,   val_indices)
+    test_ds  = Subset(test_ds,  test_indices)
+
+    print("\n[DEBUG] Using dataset subsets:")
+    print(f"  train size = {len(train_ds)}")
+    print(f"  val size   = {len(val_ds)}")
+    print(f"  test size  = {len(test_ds)}")
+
 # DataLoader takes DataSet object, batches its stuff and shuffles it, DataSet knows how to return 1 object at a time
 # where DataLoader can work with batches
 # dataloader takes list of images and labels, randomly samples them into batches (shuffle), gives us list of batches
@@ -61,10 +87,21 @@ test_loader  = DataLoader(test_ds,  batch_size=64, shuffle=False)
 # constants
 IN_DIM = n_channels * 28 * 28   # 1 * 28 * 28, flattened tensor so we have 28*28=784 inputs coming into nodes
 #so first weight matrix is [28*28x10]
-HIDDEN = [10, 10]
+if DEBUG:
+    HIDDEN = [4, 4] #smaller middle matrices for testing
+else:
+    HIDDEN = [10, 10]
+
 #last weight matrix is 10x2
 OUT_DIM = n_classes # 2, yes or no
 #--------
+
+#FOR TESTING
+if DEBUG:
+    print(f"\nModel dims:")
+    print(f"  IN_DIM  = {IN_DIM}")
+    print(f"  HIDDEN  = {HIDDEN}")
+    print(f"  OUT_DIM = {OUT_DIM}")
 
 model = MLP(IN_DIM, HIDDEN, OUT_DIM, act="relu").to(device)
 criterion = nn.CrossEntropyLoss() # criterion is now a torch loss function object
@@ -87,6 +124,8 @@ def run_epoch(loader, train=True):
     correct = 0
     total = 0
 
+    first_batch = True
+
     for x, y in loader:
         # x: (B, 1, 28, 28), y: (B, 1) or (B,)
         x = x.to(device)
@@ -94,6 +133,13 @@ def run_epoch(loader, train=True):
 
         # flatten images for MLP: (B, 1, 28, 28) -> (B, 784)
         x_flat = x.view(x.size(0), -1)
+
+        #FOR TESTING
+        if first_batch and DEBUG:
+            print(f"  x shape      = {x.shape}")
+            print(f"  x_flat shape = {x_flat.shape}")
+            print(f"  y shape      = {y.shape}")
+            first_batch = False
 
         if train:
             optimizer.zero_grad()
@@ -114,7 +160,11 @@ def run_epoch(loader, train=True):
     acc = correct / total
     return avg_loss, acc
 
-EPOCHS = 5
+if DEBUG:
+    EPOCHS = 2
+    print(f"\nStarting training for {EPOCHS} epochs...")
+else:
+    EPOCHS = 5
 
 for epoch in range(1, EPOCHS + 1):
     train_loss, train_acc = run_epoch(train_loader, train=True)
