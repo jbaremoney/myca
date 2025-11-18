@@ -7,6 +7,7 @@ from torchvision import transforms
 import medmnist
 from medmnist import INFO, BreastMNIST
 
+
 # get device we are going to do the operations with
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
