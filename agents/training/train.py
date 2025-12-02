@@ -8,7 +8,7 @@ import medmnist
 from medmnist import INFO, BreastMNIST
 
 #use this to test if it's actually working with a small network instead.
-DEBUG = True
+DEBUG = False
 
 # get device we are going to do the operations with
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,6 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #  3. octmnist       - retinal OCT disease grading
 #  4. dermamnist     - skin lesion classification (RGB)
 #  5. pathmnist      - colon histopathology (RGB)
+
 data_flag = "pneumoniamnist"
 info = INFO[data_flag]          # metadata dict
 n_channels = info["n_channels"] # should be 1
