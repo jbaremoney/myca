@@ -1,4 +1,14 @@
 # agent_tools.py
+import os
+import sys
+
+CURRENT_FILE = os.path.abspath(__file__)
+SERVERS_DIR = os.path.dirname(CURRENT_FILE)
+AGENTS_DIR = os.path.dirname(SERVERS_DIR)
+
+if AGENTS_DIR not in sys.path:
+    sys.path.insert(0, AGENTS_DIR)
+
 import torch
 from torchvision import transforms
 from PIL import Image

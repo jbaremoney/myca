@@ -2,9 +2,19 @@ import asyncio
 import base64
 from pathlib import Path
 
-from agents.servers.breast.breast_server import classify_breast_image  # adjust import if path is different
+import os
 import sys
-sys.path.append("../")  # go up one level so "agents" is visible
+
+# Absolute path to this file (test_breast.py)
+THIS_FILE = os.path.abspath(__file__)
+# Directory containing this file: ...\myca\scripts
+SCRIPTS_DIR = os.path.dirname(THIS_FILE)
+# Project root: one level up from scripts -> ...\myca
+PROJECT_ROOT = os.path.dirname(SCRIPTS_DIR)
+
+# Add project root to sys.path if it's not already there
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from agents.servers.breast.breast_server import classify_breast_image
 
