@@ -15,7 +15,7 @@ from PIL import Image
 import io
 import base64
 
-from training.net_models import MLP  # your existing MLP
+from agents.training.net_models import MLP  # your existing MLP
 
 
 def load_model(checkpoint_path: str, in_dim: int, hidden: list[int], out_dim: int, device: torch.device):
