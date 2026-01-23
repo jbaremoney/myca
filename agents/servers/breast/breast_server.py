@@ -4,7 +4,7 @@ from models.mnist_classifiers import BreastClassifier
 mcp = FastMCP("breast")
 
 @mcp.tool()
-def classify(img: str) -> bool:
+def classify(img: str):
     classifier = BreastClassifier()
     return classifier.classify_image(img)
 
