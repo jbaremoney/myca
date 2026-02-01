@@ -3,7 +3,7 @@ from typing import List, Dict
 import torch
 from mcp.server.fastmcp import FastMCP
 
-from agents.servers.agent_tools import load_model, preprocess_base64_image, infer
+from nodes.agent_tools import load_model, preprocess_base64_image, infer
 
 class MnistClassifier:
     def __init__(self,

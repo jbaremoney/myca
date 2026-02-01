@@ -1,0 +1,4 @@
+langgraph
+torch
+pydantic
+langchain-openai
