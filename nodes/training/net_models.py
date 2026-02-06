@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 class MLP(nn.Module):
     def __init__(self, in_dim: int, hidden_dims: list[int], out_dim: int, act="relu"):

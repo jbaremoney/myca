@@ -42,7 +42,7 @@ class MnistClassifier:
 class BreastClassifier(MnistClassifier):
     def __init__(self):
         super(BreastClassifier, self).__init__("breastmnist",
-                                               "./agents/servers/breast/breastmnist_mlp.pth",
+                                               "./nodes/breast/breastmnist_mlp.pth",
                                                1, 2, [10,10], 28*28,["benign", "malignant"])
 
     def classify_image(self, image_b64: str):
