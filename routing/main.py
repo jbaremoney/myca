@@ -9,36 +9,62 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from dotenv import load_dotenv
+from pgvector.psycopg import register_vector
+import json
+import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError
 load_dotenv()
 
+
+#ENV VARIABLES
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL env var is required")
 EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "1536"))
 ROUTER_API_KEY = os.environ.get("ROUTER_API_KEY", "dev-key")
+BEDROCK_REGION = os.environ.get("AWS_REGION", "us-east-1")
+TITAN_EMBED_MODEL_ID = os.environ.get("TITAN_EMBED_MODEL_ID", "amazon.titan-embed-text-v1")
 
 app = FastAPI(title="Agent Registry + Router")
+
+#Embeddings client
+_br = boto3.client(
+    "bedrock-runtime",
+    region_name=BEDROCK_REGION,
+    config=Config(retries={"max_attempts": 3, "mode": "standard"}, read_timeout=10, connect_timeout=5),
+)
 
 def require_key(x_api_key: str | None):
     if x_api_key != ROUTER_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
-def stub_embed(text: str, dim: int = EMBEDDING_DIM) -> List[float]:
-    """
-    Deterministic placeholder embedding so you can build/test the system.
-    Replace with Bedrock/OpenAI embeddings later.
-    """
-    h = hashlib.sha256(text.encode("utf-8")).digest()
-    # Expand hash bytes into floats
-    vals = []
-    for i in range(dim):
-        b = h[i % len(h)]
-        vals.append((b / 255.0) * 2.0 - 1.0)  # [-1, 1]
-    return vals
+def titan_embed(text: str) -> list[float]:
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("embed text must be non-empty")
 
-def to_pgvector_literal(v: List[float]) -> str:
-    # pgvector accepts: '[1,2,3]'
-    return "[" + ",".join(f"{x:.6f}" for x in v) + "]"
+    body = json.dumps({"inputText": text})
+
+    try:
+        resp = _br.invoke_model(
+            modelId=TITAN_EMBED_MODEL_ID,
+            body=body,
+            accept="application/json",
+            contentType="application/json",
+        )
+        payload = json.loads(resp["body"].read())
+        emb = payload["embedding"]
+        if len(emb) != EMBEDDING_DIM:
+            raise RuntimeError(f"Dim mismatch: got {len(emb)}, expected {EMBEDDING_DIM}")
+        return emb
+    except ClientError as e:
+        # surfaces common issues cleanly (no model access, no IAM, wrong region/modelId)
+        raise RuntimeError(f"Bedrock invoke_model failed: {e}") from e
+
+# def to_pgvector_literal(v: List[float]) -> str:
+#     # pgvector accepts: '[1,2,3]'
+#     return "[" + ",".join(f"{x:.6f}" for x in v) + "]"
 
 class AgentUpsert(BaseModel):
     agent_id: str
@@ -67,10 +93,10 @@ def upsert_agent(payload: AgentUpsert, x_api_key: str | None = Header(default=No
         str(payload.tools or "")
     ]).strip()
 
-    emb = stub_embed(profile_text)
-    emb_lit = to_pgvector_literal(emb)
+    emb = titan_embed(profile_text)
 
     with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
@@ -94,7 +120,7 @@ def upsert_agent(payload: AgentUpsert, x_api_key: str | None = Header(default=No
                     payload.tags,
                     payload.modalities,
                     Jsonb(payload.tools),
-                    emb_lit,
+                    emb,
                 )
             )
             conn.commit()
@@ -105,11 +131,10 @@ def upsert_agent(payload: AgentUpsert, x_api_key: str | None = Header(default=No
 def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
     require_key(x_api_key)
 
-    q_emb = stub_embed(req.query)
-    q_lit = to_pgvector_literal(q_emb)
+    q_emb = titan_embed(req.query)
 
     modality_filter_sql = ""
-    params = [q_lit, req.top_k]
+    params = [q_emb, req.top_k]
 
     if req.modality:
         modality_filter_sql = "AND %s = ANY(modalities)"
@@ -136,7 +161,7 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
             ORDER BY embedding <-> %s
             LIMIT %s
         """
-        params = [q_lit, req.modality, q_lit, req.top_k]
+        params = [q_emb, req.modality, q_emb, req.top_k]
     else:
         sql = """
             SELECT agent_id, name, mcp_url, description, tags, modalities,
@@ -146,9 +171,10 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
             ORDER BY embedding <-> %s
             LIMIT %s
         """
-        params = [q_lit, q_lit, req.top_k]
+        params = [q_emb, q_emb, req.top_k]
 
     with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
         with conn.cursor( row_factory=dict_row) as cur:
             cur.execute(sql, params)
             rows = cur.fetchall()

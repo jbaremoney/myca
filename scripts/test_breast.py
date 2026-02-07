@@ -16,7 +16,7 @@ PROJECT_ROOT = os.path.dirname(SCRIPTS_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from agents.nodes.breast.breast_server import classify_breast_image
+from nodes.breast.breast_server import classify_breast_image
 
 
 def image_file_to_base64(path: str) -> str:
