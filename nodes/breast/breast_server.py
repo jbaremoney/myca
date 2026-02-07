@@ -1,5 +1,5 @@
 from mcp.server.fastmcp import FastMCP
-from models.mnist_classifiers import BreastClassifier
+from nodes.models.mnist_classifiers import BreastClassifier
 
 mcp = FastMCP("breast")
 

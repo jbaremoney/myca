@@ -5,3 +5,13 @@ pyth/
 */*/*/__pycache__
 *.env
 .vscode
+mycasite/node_modules/
+mycasite/dist/
+mycasite/.env
+mycasite/.env.local
+mycasite/.env.*.local
+
+
+
+# Vite / build
+mycasite/.vite/
