@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /route",
+  "rawPath": "/route",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json",
+    "x-api-key": "dev-key"
+  },
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/route",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "curl"
+    }
+  },
+  "body": "{\"query\":\"hello\",\"top_k\":3}",
+  "isBase64Encoded": false
+}
