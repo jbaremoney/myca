@@ -84,10 +84,11 @@ class BreastClassifier(MnistClassifier):
         }
     
 class DermClassifier(MnistClassifier):
-    label_dict = INFO["dermamnist"]["label"]
-    labels = [label_dict[i] for i in range(len(label_dict))]
 
     def __init__(self):
+        label_dict = INFO["dermamnist"]["label"]
+        keys_sorted = sorted(label_dict.keys(), key=lambda k: int(k))
+        self.labels = [label_dict[k] for k in keys_sorted]
         super(DermClassifier, self).__init__(
             "dermamnist",
             "./nodes/derm/dermamnist_mlp.pth",
@@ -132,10 +133,12 @@ class DermClassifier(MnistClassifier):
         }
     
 class PathClassifier(MnistClassifier):
-    label_dict = INFO["pathmnist"]["label"]
-    labels = [label_dict[i] for i in range(len(label_dict))]
+    
 
     def __init__(self):
+        label_dict = INFO["pathmnist"]["label"]
+        keys_sorted = sorted(label_dict.keys(), key=lambda k: int(k))
+        self.labels = [label_dict[k] for k in keys_sorted]
         super(PathClassifier, self).__init__(
             "pathmnist",
             "./nodes/path/pathmnist_mlp.pth",
@@ -148,7 +151,7 @@ class PathClassifier(MnistClassifier):
 
     def classify_image(self, image_b64: str):
         """
-        Classify a dermoscopy image sample (MedMNIST PathMNIST format).
+        Classify a colon histopathology image sample (MedMNIST PathMNIST format).
 
         Args:
             image_b64: Image encoded as a base64 string. The image will be resized to 28x28
@@ -180,10 +183,12 @@ class PathClassifier(MnistClassifier):
         }
     
 class PneumClassifier(MnistClassifier):
-    label_dict = INFO["pneumoniamnist"]["label"]
-    labels = [label_dict[i] for i in range(len(label_dict))]
 
     def __init__(self):
+        label_dict = INFO["pneumoniamnist"]["label"]
+        keys_sorted = sorted(label_dict.keys(), key=lambda k: int(k))
+        self.labels = [label_dict[k] for k in keys_sorted]
+
         super(PneumClassifier, self).__init__(
             "pneumoniamnist",
             "./nodes/pneum/pneumoniamnist_mlp.pth",
@@ -207,7 +212,7 @@ class PneumClassifier(MnistClassifier):
         """
         x = preprocess_base64_image(image_b64, n_channels=self.n_channels, device=self.device)  # (1, 3, 28, 28)
 
-        probs = infer(self.model, x)  # (9,)
+        probs = infer(self.model, x)  # (2,)
 
         probs_list = probs.cpu().tolist()
         class_index = int(torch.argmax(probs).item())
