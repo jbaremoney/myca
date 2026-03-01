@@ -1,16 +1,16 @@
 
 from fastmcp import FastMCP
-from nodes.models.mnist_classifiers import DermClassifier
+from nodes.models.mnist_classifiers import PathClassifier
 
 from starlette.responses import JSONResponse
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
 
-mcp = FastMCP("derm")
+mcp = FastMCP("path")
 
 # Load model once at startup (fast per request)
-_classifier = DermClassifier()
+_classifier = PathClassifier()
 
 @mcp.tool()
 def classify(img: str) -> dict:
