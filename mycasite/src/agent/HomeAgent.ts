@@ -1,6 +1,7 @@
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
+import { createCallMycaTool } from "./tools";
 
 export interface Message {
   role: "user" | "assistant";
@@ -21,7 +22,7 @@ export class HomeAgent {
 
     this.agent = createReactAgent({
       llm,
-      tools: [],
+      tools: [createCallMycaTool(apiKey)],
     });
   }
 
@@ -34,9 +35,12 @@ export class HomeAgent {
       throw new Error("HomeAgent not initialized with api key");
     }
 
-    // IMPORTANT: capture returned state
+    // Pass full conversation history so the agent has chat memory.
+    // LangGraph updates state during a run but does NOT carry state between invocations
+    // unless you use a checkpointer + thread_id — so we pass previous messages here.
+    const previousMessages = this.lastState?.messages ?? [];
     const state = await this.agent.invoke({
-      messages: [new HumanMessage(prompt)],
+      messages: [...previousMessages, new HumanMessage(prompt)],
     });
 
     this.lastState = state;
