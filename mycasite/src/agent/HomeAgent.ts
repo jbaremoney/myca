@@ -34,9 +34,12 @@ export class HomeAgent {
       throw new Error("HomeAgent not initialized with api key");
     }
 
-    // IMPORTANT: capture returned state
+    // Pass full conversation history so the agent has chat memory.
+    // LangGraph updates state during a run but does NOT carry state between invocations
+    // unless you use a checkpointer + thread_id — so we pass previous messages here.
+    const previousMessages = this.lastState?.messages ?? [];
     const state = await this.agent.invoke({
-      messages: [new HumanMessage(prompt)],
+      messages: [...previousMessages, new HumanMessage(prompt)],
     });
 
     this.lastState = state;
