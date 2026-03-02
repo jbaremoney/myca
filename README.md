@@ -8,6 +8,62 @@ Type this into your command line to start working within the postgres for the re
 psql "host=myca-registry.c850yomua7mm.us-east-1.rds.amazonaws.com port=5432 dbname=postgres user=myca password=seniorproj sslmode=require"
 ```
 
+## How to Push Agent to AWS
+
+First, set some environment variables, just makes things easier later when building/pushing.
+Below is setting some variables in powershell specifically
+```bash
+$env:AWS_REGION = "us-east-1"
+$env:AGENT       = "derm"
+$env:IMAGE_LOCAL = "mcp-$($env:AGENT):latest"
+$env:ECR_REPO    = "mcp-$($env:AGENT)"
+$env:SERVICE_NAME= "mcp-$($env:AGENT)-service"
+```
+
+Then, run this command to build your image. Change the path to whatever you are building
+```bash
+docker build --platform linux/amd64 -t $env:IMAGE_LOCAL -f nodes/derm/Dockerfile .
+```
+
+Then, build an ecr repo in aws. Shown below
+```bash
+aws ecr create-repository --repository-name $env:ECR_REPO --region $env:AWS_REGION 
+```
+
+Now, get some information about your AWS/ECR account, and set them as env variables to make it easy
+```bash
+$env:AWS_ACCOUNT_ID = aws sts get-caller-identity --query Account --output text 
+$env:ECR_REGISTRY   = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
+```
+
+Then, run this command to tag the latest build
+```bash
+$tag = (git rev-parse --short HEAD)
+if (-not $tag) { $tag = (Get-Date -Format "yyyyMMddHHmmss") }
+ 
+$env:IMAGE_URI_TAGGED = "$($env:ECR_REGISTRY)/$($env:ECR_REPO):$tag"
+$env:IMAGE_URI_LATEST = "$($env:ECR_REGISTRY)/$($env:ECR_REPO):latest"
+```
+
+Then do the tagging
+```bash
+docker tag $env:IMAGE_LOCAL $env:IMAGE_URI_TAGGED
+docker tag $env:IMAGE_LOCAL $env:IMAGE_URI_LATEST
+```
+
+Use this command to login to aws again
+```bash
+aws ecr get-login-password --region $env:AWS_REGION | docker login --username AWS --password-stdin $env:ECR_REGISTRY
+```
+
+Finally, use this to push 
+```bash
+docker push $env:IMAGE_URI_TAGGED
+```
+
+
+
+
 ## Testing Router --> Registry connection
 This assumes the registry is being hosted with the correct schema and router is ran locally for testing. 
 Step 1: Ensure these env variables are set in your code. 

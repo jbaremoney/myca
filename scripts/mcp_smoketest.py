@@ -8,9 +8,17 @@ import httpx
 
 
 #CHANGE THESE TO TEST OTHER AGENTS
-MCP_URL = "https://q4rimpht8w.us-east-1.awsapprunner.com/mcp"
-# Optional: your health endpoint
-HEALTH_URL = "https://q4rimpht8w.us-east-1.awsapprunner.com/healthz"
+# MCP_URL = "https://q4rimpht8w.us-east-1.awsapprunner.com/mcp" #breast
+# HEALTH_URL = "https://q4rimpht8w.us-east-1.awsapprunner.com/healthz" #breast
+
+# MCP_URL = "https://9iwzme8szu.us-east-1.awsapprunner.com/mcp" #derm
+# HEALTH_URL = "https://9iwzme8szu.us-east-1.awsapprunner.com/healthz" #derm
+
+# MCP_URL = "https://iffzub9gc3.us-east-1.awsapprunner.com/mcp" #path
+# HEALTH_URL = "https://iffzub9gc3.us-east-1.awsapprunner.com/healthz" #path
+
+MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp" #path
+HEALTH_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/healthz" #path
 
 
 def sse_read_first_json(stream: httpx.Response, timeout_lines: int = 200) -> dict:
