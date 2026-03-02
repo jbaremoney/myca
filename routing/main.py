@@ -14,6 +14,7 @@ import json
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from mangum import Mangum
 load_dotenv()
 
 
@@ -146,7 +147,7 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
         FROM agents
         WHERE is_active = true
         {modality_filter_sql}
-        ORDER BY embedding <-> %s
+        ORDER BY embedding <-> %s::vector
         LIMIT %s
     """
 
@@ -154,21 +155,21 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
     if req.modality:
         sql = """
             SELECT agent_id, name, mcp_url, description, tags, modalities,
-                   (embedding <-> %s) AS distance
+                (embedding <-> (%s)::vector) AS distance
             FROM agents
             WHERE is_active = true
-              AND %s = ANY(modalities)
-            ORDER BY embedding <-> %s
+            AND %s = ANY(modalities)
+            ORDER BY embedding <-> (%s)::vector
             LIMIT %s
         """
         params = [q_emb, req.modality, q_emb, req.top_k]
     else:
         sql = """
             SELECT agent_id, name, mcp_url, description, tags, modalities,
-                   (embedding <-> %s) AS distance
+                (embedding <-> (%s)::vector) AS distance
             FROM agents
             WHERE is_active = true
-            ORDER BY embedding <-> %s
+            ORDER BY embedding <-> (%s)::vector
             LIMIT %s
         """
         params = [q_emb, q_emb, req.top_k]
@@ -194,3 +195,5 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
         })
 
     return {"candidates": candidates}
+
+handler = Mangum(app)
