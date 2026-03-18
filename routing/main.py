@@ -4,6 +4,7 @@ import hashlib
 from typing import List, Optional, Any, Dict
 
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg
 from psycopg.rows import dict_row
@@ -28,6 +29,14 @@ BEDROCK_REGION = os.environ.get("AWS_REGION", "us-east-1")
 TITAN_EMBED_MODEL_ID = os.environ.get("TITAN_EMBED_MODEL_ID", "amazon.titan-embed-text-v1")
 
 app = FastAPI(title="Agent Registry + Router")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],          # allow any origin
+    allow_credentials=False,      # MUST be False when allow_origins=["*"]
+    allow_methods=["*"],          # allow POST, OPTIONS, etc.
+    allow_headers=["*"],          # allow Content-Type, X-API-Key, Authorization, etc.
+)
 
 #Embeddings client
 _br = boto3.client(
@@ -130,9 +139,20 @@ def upsert_agent(payload: AgentUpsert, x_api_key: str | None = Header(default=No
 
 @app.post("/route")
 def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
+    print("route start")
     require_key(x_api_key)
+    print("api key ok")
 
+    print("before bedrock")
     q_emb = titan_embed(req.query)
+    print("after bedrock")
+
+    print("before db")
+    
+    
+    # require_key(x_api_key)
+
+    # q_emb = titan_embed(req.query)
 
     modality_filter_sql = ""
     params = [q_emb, req.top_k]
@@ -175,6 +195,7 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
         params = [q_emb, q_emb, req.top_k]
 
     with psycopg.connect(DATABASE_URL) as conn:
+        print("db connected")
         register_vector(conn)
         with conn.cursor( row_factory=dict_row) as cur:
             cur.execute(sql, params)
