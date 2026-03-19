@@ -3,6 +3,11 @@ import { HomeAgent } from './agent/HomeAgent'
 import type { Message } from './agent/HomeAgent'
 import './App.css'
 
+interface UploadedImage {
+  base64: string
+  filename: string
+}
+
 function App() {
   const [apiKey, setApiKey] = useState<string>('')
   const [isInitialized, setIsInitialized] = useState(false)
@@ -10,8 +15,10 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null)
   const homeAgentRef = useRef<HomeAgent | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     // Create a single instance of HomeAgent
@@ -58,17 +65,54 @@ function App() {
     setError('')
 
     try {
-      // Run the agent (it will handle state internally)
-      await homeAgentRef.current.run(userMessage)
+      // Run the agent with message and optional image
+      await homeAgentRef.current.run(userMessage, uploadedImage?.base64)
 
       // Get updated messages from agent state (synchronous now)
       const updatedMessages = homeAgentRef.current.getMessages()
       setMessages(updatedMessages)
+
+      // Clear uploaded image after submit
+      setUploadedImage(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate PNG file
+    if (file.type !== 'image/png') {
+      setError('Please select a PNG file')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const base64String = event.target?.result as string
+      setUploadedImage({
+        base64: base64String,
+        filename: file.name,
+      })
+      setError('')
+    }
+    reader.onerror = () => {
+      setError('Failed to read file')
+    }
+    reader.readAsDataURL(file)
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setUploadedImage(null)
   }
 
   // Show API key prompt if not initialized
@@ -132,7 +176,42 @@ function App() {
         <div ref={messagesEndRef} />
       </div>
       <div className="chat-input-container">
+        {uploadedImage && (
+          <div className="image-preview-container">
+            <div className="image-preview">
+              <img src={uploadedImage.base64} alt="Uploaded" />
+              <button
+                type="button"
+                className="remove-image-button"
+                onClick={handleRemoveImage}
+                title="Remove image"
+              >
+                ✕
+              </button>
+            </div>
+            <span className="image-filename">{uploadedImage.filename}</span>
+          </div>
+        )}
         <form onSubmit={handleChatSubmit} className="chat-input-form">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept="image/png"
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            className="file-upload-button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Upload PNG file"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L12 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M2 12L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
           <input
             type="text"
             value={input}
