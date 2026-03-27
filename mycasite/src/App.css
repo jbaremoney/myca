@@ -388,8 +388,137 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 12px;
   transition: background-color 0.2s;
+}
+
+.node-menu-container {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+}
+
+.node-menu-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #52536e;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.node-menu-tab:hover {
+  background: #636586;
+  border-color: #444;
+}
+
+.node-menu-label {
+  line-height: 1;
+}
+
+.node-menu-chevron {
+  transition: transform 0.2s ease;
+}
+
+.node-menu-tab.open .node-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.node-dropdown-menu {
+  margin-top: 6px;
+  min-width: 140px;
+  background: #52536e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.node-dropdown-item {
+  width: 100%;
+  background: transparent;
+  color: white;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.node-dropdown-item:hover {
+  background: #636586;
+}
+
+.top-dropdown {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dropdown-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #636586;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dropdown-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dropdown-icon {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-button.open .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 42px;
+  background: #343541;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 140px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+}
+
+.dropdown-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #2a2a2a;
 }
 
 .remove-image-button:hover {

@@ -137,6 +137,128 @@ def upsert_agent(payload: AgentUpsert, x_api_key: str | None = Header(default=No
 
     return {"ok": True, "agent_id": payload.agent_id}
 
+@app.get("/agents")
+def list_agents(x_api_key: str | None = Header(default=None)):
+    require_key(x_api_key)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                SELECT agent_id, name, mcp_url, description, tags, modalities, tools, updated_at
+                FROM agents
+                ORDER BY updated_at DESC
+                """
+            )
+            rows = cur.fetchall()
+
+    return {"ok": True, "agents": rows}
+
+@app.get("/agents/{agent_id}")
+def get_agent(agent_id: str, x_api_key: str | None = Header(default=None)):
+    require_key(x_api_key)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                SELECT agent_id, name, mcp_url, description, tags, modalities, tools, updated_at
+                FROM agents
+                WHERE agent_id = %s
+                """,
+                (agent_id,)
+            )
+            row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    return {"ok": True, "agent": row}
+
+@app.put("/agents/{agent_id}")
+def update_agent(agent_id: str, payload: AgentUpsert, x_api_key: str | None = Header(default=None)):
+    require_key(x_api_key)
+
+    if payload.agent_id != agent_id:
+        raise HTTPException(status_code=400, detail="Path agent_id must match payload agent_id")
+
+    profile_text = " ".join([
+        payload.agent_id,
+        payload.name or "",
+        payload.description or "",
+        " ".join(payload.tags or []),
+        " ".join(payload.modalities or []),
+        str(payload.tools or "")
+    ]).strip()
+
+    emb = titan_embed(profile_text)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                UPDATE agents
+                SET
+                    name = %s,
+                    mcp_url = %s,
+                    description = %s,
+                    tags = %s,
+                    modalities = %s,
+                    tools = %s,
+                    embedding = %s,
+                    updated_at = now()
+                WHERE agent_id = %s
+                RETURNING agent_id, name, mcp_url, description, tags, modalities, tools, updated_at
+                """,
+                (
+                    payload.name,
+                    payload.mcp_url,
+                    payload.description,
+                    payload.tags,
+                    payload.modalities,
+                    Jsonb(payload.tools),
+                    emb,
+                    agent_id,
+                )
+            )
+            row = cur.fetchone()
+            conn.commit()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    return {"ok": True, "agent": row}
+
+@app.delete("/agents/{agent_id}")
+def delete_agent(agent_id: str, x_api_key: str | None = Header(default=None)):
+    require_key(x_api_key)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        register_vector(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                DELETE FROM agents
+                WHERE agent_id = %s
+                RETURNING agent_id, name
+                """,
+                (agent_id,)
+            )
+            row = cur.fetchone()
+            conn.commit()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    return {
+        "ok": True,
+        "deleted_agent_id": row["agent_id"],
+        "deleted_name": row["name"],
+    }
+
 @app.post("/route")
 def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
     print("route start")

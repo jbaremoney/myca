@@ -5,7 +5,7 @@ from medmnist import INFO
 import medmnist
 import numpy as np
 
-from nodes.models.mnist_classifiers import PathClassifier, PneumClassifier, DermClassifier  # update import
+from nodes.models.mnist_classifiers import PathClassifier, PneumClassifier, DermClassifier, BreastClassifier  # update import
 # or import your server module and instantiate the classes
 
 def pil_to_b64(pil_img: Image.Image) -> str:
@@ -63,4 +63,5 @@ if __name__ == "__main__":
     
     # test_classifier(PneumClassifier(), "pneumoniamnist") 
     # test_classifier(PathClassifier(), "pathmnist")
-    test_classifier(DermClassifier(), "dermamnist")
+    #test_classifier(DermClassifier(), "dermamnist")
+    test_classifier(BreastClassifier(), "breastmnist")
