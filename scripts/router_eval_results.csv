@@ -1,0 +1,66 @@
+prompt,type,expected,top_agent,top_score,second_score,margin,correct
+Does this breast ultrasound show a tumor?,positive,breast-agent,breast-agent,0.057547303167849936,0.045542237364570484,0.012005065803279452,True
+Analyze this breast ultrasound image for cancer,positive,breast-agent,breast-agent,0.06712011624638306,0.052605699788452566,0.014514416457930494,True
+Is there a mass in this breast scan?,positive,breast-agent,breast-agent,0.051449830433096526,0.04527499457753695,0.006174835855559578,True
+Classify this breast ultrasound image,positive,breast-agent,breast-agent,0.06398838357744219,0.04822103286071088,0.015767350716731306,True
+Check this breast imaging for abnormalities,positive,breast-agent,breast-agent,0.04945245912579681,0.04357128268384858,0.00588117644194823,True
+Is this breast ultrasound showing a benign or malignant tumor?,positive,breast-agent,breast-agent,0.0570357012723505,0.045729339703473815,0.011306361568876683,True
+Evaluate this ultrasound of breast tissue for cancer,positive,breast-agent,breast-agent,0.06520121489427316,0.04854595493081249,0.01665525996346067,True
+Does this breast scan indicate a lump or abnormality?,positive,breast-agent,breast-agent,0.051928045879834905,0.0451153514379801,0.006812694441854804,True
+Analyze this breast ultrasound for signs of disease,positive,breast-agent,breast-agent,0.05981588695767579,0.046606565678245705,0.013209321279430086,True
+What does this breast imaging result suggest?,positive,breast-agent,breast-agent,0.0506755796705308,0.04369400144082739,0.006981578229703411,True
+Does this chest x-ray show pneumonia?,positive,pneum-agent,pneum-agent,0.05449616427735983,0.04151424954459628,0.012981914732763548,True
+Analyze this lung x-ray for infection,positive,pneum-agent,pneum-agent,0.06332794390792489,0.05026336911320277,0.013064574794722117,True
+Classify this chest radiograph,positive,pneum-agent,pneum-agent,0.04832517746725625,0.045756208462262596,0.0025689690049936556,True
+Is this x-ray normal or pneumonia?,positive,pneum-agent,pneum-agent,0.05628478201145524,0.04431318175678876,0.011971600254666481,True
+Check this chest scan for lung disease,positive,pneum-agent,pneum-agent,0.04893499829322104,0.04196005491594645,0.006974943377274591,True
+Analyzes chest X-ray images to detect signs of pneumonia. Designed to assist in respiratory disease diagnosis by identifying infection patterns in lung imaging.,positive,pneum-agent,pneum-agent,0.09317851527031518,0.058629799493686456,0.03454871577662872,True
+Does this lung x-ray indicate pneumonia or infection?,positive,pneum-agent,pneum-agent,0.05840659713011504,0.04397244120497556,0.014434155925139483,True
+Analyze this chest radiograph for signs of lung disease,positive,pneum-agent,pneum-agent,0.057372292981142194,0.04683079655690218,0.010541496424240016,True
+Is there fluid or infection visible in this chest x-ray?,positive,pneum-agent,pneum-agent,0.052197997138103525,0.045325871313885754,0.00687212582421777,True
+Check this lung scan for pneumonia symptoms,positive,pneum-agent,pneum-agent,0.053045000299238046,0.04073124834246262,0.012313751956775427,True
+Classify this chest x-ray image as normal or abnormal,positive,pneum-agent,pneum-agent,0.046858631121178385,0.04496942537182437,0.0018892057493540143,True
+Classify this skin lesion image,positive,derm-agent,derm-agent,0.053578149463033214,0.05062192003662287,0.0029562294264103423,True
+Is this mole cancerous?,positive,derm-agent,derm-agent,0.04759301694222116,0.044306572858819414,0.0032864440834017433,True
+Analyze this dermatology image,positive,derm-agent,derm-agent,0.06013594430793831,0.053054868618565044,0.007081075689373266,True
+Check this skin image for disease,positive,derm-agent,derm-agent,0.059670580695406414,0.05022246917774886,0.00944811151765755,True
+What type of skin lesion is this?,positive,derm-agent,derm-agent,0.05256158452562446,0.047968385646721755,0.004593198878902707,True
+Does this skin lesion look like melanoma?,positive,derm-agent,derm-agent,0.04985677836380024,0.04415627854276149,0.005700499821038749,True
+Analyze this mole image for possible skin cancer,positive,derm-agent,derm-agent,0.06074076131856816,0.0513476577814411,0.009393103537127065,True
+Is this skin spot benign or malignant?,positive,derm-agent,derm-agent,0.04962662370500989,0.045658131080223076,0.003968492624786817,True
+Classify this dermatology photo of a skin lesion,positive,derm-agent,derm-agent,0.051801109538165684,0.047775621155094636,0.004025488383071048,True
+Evaluate this skin image for abnormal pigmentation,positive,derm-agent,derm-agent,0.05644369911335491,0.049433184955213066,0.007010514158141842,True
+Classify this colon histopathology image,positive,path-agent,path-agent,0.06179527257942198,0.04866902031398997,0.013126252265432008,True
+Analyze this tissue biopsy image,positive,path-agent,path-agent,0.055927131976264186,0.0511588767971136,0.004768255179150582,True
+What does this pathology slide show?,positive,path-agent,path-agent,0.05652081224536051,0.05072984355715514,0.005790968688205375,True
+Check this microscopic colon tissue image,positive,path-agent,path-agent,0.054428808408748634,0.04677591561865212,0.007652892790096517,True
+Detect abnormalities in this histology image,positive,path-agent,path-agent,0.052873343385983665,0.046677637111185444,0.006195706274798221,True
+Analyze this histopathology slide for cancerous cells,positive,path-agent,path-agent,0.055319651570462654,0.04922060219750377,0.006099049372958881,True
+Classify this microscopic tissue image from a biopsy,positive,path-agent,path-agent,0.055158659675422876,0.049186163122248605,0.005972496553174271,True
+Does this colon tissue sample show abnormalities?,positive,path-agent,path-agent,0.05426820470795467,0.046020138217139,0.008248066490815664,True
+Evaluate this pathology image for tumor presence,positive,path-agent,path-agent,0.054294810273836265,0.05011199981253924,0.0041828104612970235,True
+What does this biopsy slide indicate?,positive,path-agent,path-agent,0.05182087695569601,0.048151657756010886,0.003669219199685124,True
+What is the weather today?,negative,,derm-agent,0.042600987406225754,0.042110415216112876,0.0004905721901128784,
+Write a Python function for sorting,negative,,evil-agent,0.0400961347593309,0.0400167933499296,7.934140940130119e-05,
+Explain how databases work,negative,,evil-agent,0.044771080972284265,0.043086790822413505,0.0016842901498707596,
+Who won the Super Bowl?,negative,,derm-agent,0.04492533719427626,0.043761257443357515,0.0011640797509187423,
+Translate this sentence to Spanish,negative,,evil-agent,0.04696168825672566,0.046944947730682786,1.6740526042877124e-05,
+Help me plan my college schedule,negative,,derm-agent,0.039107244258586936,0.03894072881956349,0.00016651543902344856,
+What is machine learning?,negative,,path-agent,0.047883736195396494,0.047090293817454006,0.0007934423779424882,
+Generate a resume for me,negative,,evil-agent,0.04283955901715576,0.04158394756716448,0.001255611449991284,
+What is the capital of France?,negative,,derm-agent,0.045809443448635745,0.04483982271598752,0.0009696207326482242,
+Write a Java program to reverse a string,negative,,evil-agent,0.04067386294497336,0.039566081983330954,0.0011077809616424072,
+Explain how the internet works,negative,,evil-agent,0.042872270429812016,0.041069149335476764,0.0018031210943352527,
+Give me a workout plan,negative,,evil-agent,0.043733849259903874,0.04171065924929609,0.0020231900106077866,
+How do I cook pasta?,negative,,evil-agent,0.04533704553382982,0.04398978232231792,0.0013472632115118996,
+Analyze this medical image,ambiguous,,derm-agent,0.05253456804991127,0.0519001056823841,0.0006344623675271707,
+What disease is shown in this scan?,ambiguous,,pneum-agent,0.050387849342065895,0.049614928556158906,0.0007729207859069886,
+Classify this medical scan,ambiguous,,breast-agent,0.049368522216433286,0.04714884120633014,0.0022196810101031486,
+Check this image for abnormalities,ambiguous,,derm-agent,0.048590084549006894,0.048339317561609356,0.0002507669873975382,
+What condition does this image show?,ambiguous,,derm-agent,0.052443245334703924,0.050630791808811,0.001812453525892925,
+Look at this image and diagnose it,ambiguous,,derm-agent,0.05288890532738761,0.051028177298554286,0.0018607280288333236,
+Analyze this scan,ambiguous,,derm-agent,0.05173376429293776,0.05129390741639767,0.00043985687654008593,
+What does this medical image show?,ambiguous,,derm-agent,0.05114791185451841,0.0500513619966475,0.0010965498578709085,
+Classify this image for disease,ambiguous,,path-agent,0.051229178289132156,0.04842389416933385,0.0028052841197983083,
+Is this image normal or abnormal?,ambiguous,,derm-agent,0.04599862794395219,0.045378063727427004,0.0006205642165251837,
+What condition is visible here?,ambiguous,,derm-agent,0.05174806061240037,0.04920028733922054,0.002547773273179829,

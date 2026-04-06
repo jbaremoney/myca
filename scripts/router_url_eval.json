@@ -1,0 +1,25 @@
+[
+  {"prompt": "Does this breast ultrasound show a tumor?", "expected": "breast-agent", "type": "positive"},
+  {"prompt": "Analyze this breast ultrasound image for cancer", "expected": "breast-agent", "type": "positive"},
+  {"prompt": "Is there a mass in this breast scan?", "expected": "breast-agent", "type": "positive"},
+
+  {"prompt": "Does this chest x-ray show pneumonia?", "expected": "pneum-agent", "type": "positive"},
+  {"prompt": "Analyze this lung x-ray for infection", "expected": "pneum-agent", "type": "positive"},
+  {"prompt": "Classify this chest radiograph", "expected": "pneum-agent", "type": "positive"},
+
+  {"prompt": "Classify this skin lesion image", "expected": "derm-agent", "type": "positive"},
+  {"prompt": "Is this mole cancerous?", "expected": "derm-agent", "type": "positive"},
+  {"prompt": "Analyze this dermatology image", "expected": "derm-agent", "type": "positive"},
+
+  {"prompt": "Classify this colon histopathology image", "expected": "path-agent", "type": "positive"},
+  {"prompt": "Analyze this tissue biopsy image", "expected": "path-agent", "type": "positive"},
+  {"prompt": "What does this pathology slide show?", "expected": "path-agent", "type": "positive"},
+
+  {"prompt": "What is the weather today?", "expected": null, "type": "negative"},
+  {"prompt": "Write a Python function for sorting", "expected": null, "type": "negative"},
+  {"prompt": "Explain how databases work", "expected": null, "type": "negative"},
+
+  {"prompt": "Analyze this medical image", "expected": null, "type": "ambiguous"},
+  {"prompt": "What disease is shown in this scan?", "expected": null, "type": "ambiguous"},
+  {"prompt": "Classify this medical scan", "expected": null, "type": "ambiguous"}
+]

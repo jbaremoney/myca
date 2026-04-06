@@ -27,6 +27,7 @@ EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "1536"))
 ROUTER_API_KEY = os.environ.get("ROUTER_API_KEY", "dev-key")
 BEDROCK_REGION = os.environ.get("AWS_REGION", "us-east-1")
 TITAN_EMBED_MODEL_ID = os.environ.get("TITAN_EMBED_MODEL_ID", "amazon.titan-embed-text-v1")
+REJECT_THRESHOLD = 0.0475  # set based on router_eval_results.csv analysis
 
 app = FastAPI(title="Agent Registry + Router")
 
@@ -327,6 +328,8 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
     candidates = []
     for r in rows:
         dist = float(r["distance"])
+        score = 1.0 / (1.0 + dist)
+
         candidates.append({
             "agent_id": r["agent_id"],
             "name": r["name"],
@@ -337,6 +340,16 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
             "modalities": r["modalities"],
         })
 
-    return {"candidates": candidates}
+    best_url = ""
+
+    if candidates:
+        top_candidate = candidates[0]
+        top_score = top_candidate["score"]
+
+        # Only reject if below threshold
+        if top_score >= REJECT_THRESHOLD:
+            best_url = top_candidate["mcp_url"]
+
+    return {"url": best_url}
 
 handler = Mangum(app)
