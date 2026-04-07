@@ -1,0 +1,235 @@
+/* Page wrapper */
+.registry-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #343541;
+  color: rgba(255, 255, 255, 0.87);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Header */
+.registry-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.registry-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.registry-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Back button */
+.registry-back-button {
+  padding: 0.5rem 0.9rem;
+  background: #52536e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.registry-back-button:hover {
+  background: #636586;
+}
+
+/* Messages */
+.registry-message {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.registry-message.error {
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.registry-message.success {
+  background: rgba(0, 255, 120, 0.15);
+  border: 1px solid rgba(0, 255, 120, 0.3);
+}
+
+/* Controls */
+.registry-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.registry-button {
+  padding: 0.6rem 1rem;
+  background: #52536e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.registry-button:hover:not(:disabled) {
+  background: #636586;
+}
+
+.registry-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.registry-button.secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.registry-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.registry-button.danger {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.4);
+}
+
+.registry-button.danger:hover {
+  background: rgba(255, 0, 0, 0.35);
+}
+
+/* Search box */
+.registry-search-box {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.registry-input {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #40414f;
+  color: white;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.registry-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Layout */
+.registry-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Panels */
+.registry-panel {
+  background-color: #444654;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.registry-panel h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+/* Agent list */
+.registry-agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Agent card */
+.registry-agent-card {
+  background-color: #343541;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+.registry-agent-card h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.registry-agent-main p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+/* Actions */
+.registry-agent-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Selected agent */
+.registry-selected-card {
+  background-color: #343541;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.registry-selected-card p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
+/* Tools block */
+.registry-tools-block {
+  margin-top: 1rem;
+}
+
+.registry-tools-block pre {
+  background-color: #40414f;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Scrollbars (match chat style) */
+.registry-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.registry-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.registry-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .registry-layout {
+    grid-template-columns: 1fr;
+  }
+}

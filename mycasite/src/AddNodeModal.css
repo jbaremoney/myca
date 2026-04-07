@@ -1,0 +1,106 @@
+.add-node-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.add-node-modal {
+  width: 100%;
+  max-width: 520px;
+  background: #171717;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.add-node-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.add-node-modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.close-modal-button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.add-node-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-node-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-node-form input,
+.add-node-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #222;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.add-node-form input:focus,
+.add-node-form textarea:focus {
+  border-color: #555;
+}
+
+.form-error {
+  color: #ff7b7b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.add-node-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.secondary-button,
+.primary-button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.secondary-button {
+  background: #2a2a2a;
+  color: white;
+}
+
+.primary-button {
+  background: white;
+  color: black;
+}

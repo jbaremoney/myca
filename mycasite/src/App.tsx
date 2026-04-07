@@ -2,10 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import { HomeAgent } from './agent/HomeAgent'
 import type { Message } from './agent/HomeAgent'
 import './App.css'
+import AddNodeModal from './AddNodeModal'
+import RegistryPage from './RegistryPage'
 
 interface UploadedImage {
   base64: string
   filename: string
+}
+
+export interface AgentUpsertPayload {
+  agent_id: string;
+  name: string;
+  mcp_url: string;
+  description: string;
+  tags: string[];
+  modalities: string[];
+  tools: Record<string, unknown>;
 }
 
 function App() {
@@ -16,6 +28,9 @@ function App() {
   const [input, setInput] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null)
+  const [open, setOpen] = useState(false);
+  const [showAddNodeModal, setShowAddNodeModal] = useState(false);
+  const [view, setView] = useState<'chat' | 'registry'>('chat');
   const homeAgentRef = useRef<HomeAgent | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -60,7 +75,6 @@ function App() {
     }
 
     const userMessage = input.trim()
-    setInput('')
     setIsLoading(true)
     setError('')
 
@@ -78,6 +92,7 @@ function App() {
       setError(err instanceof Error ? err.message : 'Failed to send message')
     } finally {
       setIsLoading(false)
+      setInput('')
     }
   }
 
@@ -115,7 +130,36 @@ function App() {
     setUploadedImage(null)
   }
 
-  // Show API key prompt if not initialized
+  const handleCloseModal = () => {
+    setShowAddNodeModal(false);
+  };
+
+  const handleSubmitNode = async (formData: AgentUpsertPayload): Promise<void> => {
+    try {
+      const response = await fetch("https://aofbnauuix32ebcof5guv5nxai0mblkm.lambda-url.us-east-1.on.aws/agents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": "dev-key",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add agent: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Agent added:", result);
+
+      setShowAddNodeModal(false);
+    } catch (error) {
+      console.error("Error adding agent:", error);
+    }
+  };
+
+  // Chat interface after initialization
   if (!isInitialized) {
     return (
       <div className="api-key-prompt">
@@ -144,9 +188,64 @@ function App() {
     )
   }
 
+  if (view === 'registry') {
+    return (
+      <RegistryPage
+        onBack={() => setView('chat')}
+      />
+    )
+  }
+
   // Chat interface after initialization
   return (
     <div className="chat-container">
+      <div className="node-menu-container">
+        <button
+          className={`node-menu-tab ${open ? "open" : ""}`}
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle node menu"
+        >
+          <svg
+            className="node-menu-chevron"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M6 9L12 15L18 9"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        {open && (
+          <div className="node-dropdown-menu">
+            <button
+              className="node-dropdown-item"
+              onClick={() => {
+                setShowAddNodeModal(true);
+                setOpen(false);
+              }}
+            >
+              Add Node
+            </button>
+            <button
+              className="node-dropdown-item"
+              onClick={() => {
+                setView('registry');
+                setOpen(false);
+              }}
+            >
+              Registry
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-welcome">
@@ -175,6 +274,7 @@ function App() {
         )}
         <div ref={messagesEndRef} />
       </div>
+
       <div className="chat-input-container">
         {uploadedImage && (
           <div className="image-preview-container">
@@ -192,6 +292,7 @@ function App() {
             <span className="image-filename">{uploadedImage.filename}</span>
           </div>
         )}
+
         <form onSubmit={handleChatSubmit} className="chat-input-form">
           <input
             type="file"
@@ -212,6 +313,7 @@ function App() {
               <path d="M2 12L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
+
           <input
             type="text"
             value={input}
@@ -221,8 +323,9 @@ function App() {
             disabled={isLoading}
             autoFocus
           />
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="chat-send-button"
             disabled={isLoading || !input.trim()}
           >
@@ -232,6 +335,14 @@ function App() {
             </svg>
           </button>
         </form>
+
+        {showAddNodeModal && (
+          <AddNodeModal
+            onClose={handleCloseModal}
+            onSubmit={handleSubmitNode}
+          />
+        )}
+
         {error && <p className="error-message">{error}</p>}
       </div>
     </div>

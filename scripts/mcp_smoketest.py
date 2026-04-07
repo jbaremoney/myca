@@ -138,8 +138,7 @@ def main():
         print("Session ID:", session_id)
         print("Initialize response:")
         print(json.dumps(init_resp, indent=2))
-        print("Initialize response:")
-        print(json.dumps(init_resp, indent=2))
+        
 
         # 4) tools/list
         tools_list_payload = {
