@@ -17,8 +17,8 @@ import httpx
 # MCP_URL = "https://iffzub9gc3.us-east-1.awsapprunner.com/mcp" #path
 # HEALTH_URL = "https://iffzub9gc3.us-east-1.awsapprunner.com/healthz" #path
 
-MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp" #path
-HEALTH_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/healthz" #path
+MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp" #pneum
+HEALTH_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/healthz" #pneum
 
 
 def sse_read_first_json(stream: httpx.Response, timeout_lines: int = 200) -> dict:

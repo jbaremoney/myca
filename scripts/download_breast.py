@@ -3,7 +3,7 @@ from medmnist import INFO
 from torchvision import transforms
 from PIL import Image
 
-data_flag = "breastmnist"
+data_flag = "pneumoniamnist"
 info = INFO[data_flag]
 DataClass = getattr(medmnist, info["python_class"])
 
@@ -15,5 +15,5 @@ if not isinstance(img, Image.Image):
     img = Image.fromarray(img)
 
 img = img.resize((28, 28))
-img.save("test_breast.png")
-print("Saved test_breast.png with label:", label)
+img.save("test_pneumonia.png")
+print("Saved test_pneumonia.png with label:", label)

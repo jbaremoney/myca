@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const MCP_PROTOCOL_VERSION = "2025-03-26";
+const MCP_PROTOCOL_VERSION = "2024-11-05";
 
 export type JsonSchemaObject = {
   type: "object";
@@ -24,6 +24,31 @@ interface AgentJobTool {
   description?: string;
   inputSchema: Record<string, unknown>;
   outputSchema?: Record<string, unknown>;
+}
+
+function parseMcpAxiosResponse(data: unknown) {
+  if (typeof data === "object" && data !== null) {
+    return data as Record<string, unknown>;
+  }
+
+  if (typeof data !== "string") {
+    throw new Error("MCP response was neither JSON nor string");
+  }
+
+  const lines = data.split(/\r?\n/);
+  let dataBuf = "";
+
+  for (const line of lines) {
+    if (line.startsWith("data:")) {
+      dataBuf += line.slice(5).trim();
+    }
+  }
+
+  if (!dataBuf) {
+    throw new Error(`No data: line found in MCP SSE response: ${data}`);
+  }
+
+  return JSON.parse(dataBuf);
 }
 
 // stateful MCP session
@@ -82,6 +107,7 @@ export class McpSession {
       {
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json, text/event-stream",
           "MCP-Protocol-Version": this.protocolVersion,
           ...(this.sessionId ? { "MCP-Session-Id": this.sessionId } : {}),
         },
@@ -99,59 +125,87 @@ export class McpSession {
       },
       {
         headers: {
-          "Content-Type": "application/json",
-          "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
-          ...(this.sessionId
-            ? { "MCP-Session-Id": this.sessionId }
-            : {}),
+          "content-type": "application/json",
+          "accept": "application/json, text/event-stream",
+          "mcp-protocol-version": this.protocolVersion,
+          ...(this.sessionId ? { "mcp-session-id": this.sessionId } : {}),
         },
+        responseType: "text",
       }
     );
 
-    return response.data.result.tools;
+    console.log("FULL MCP RESPONSE:", response.data);
+
+    const parsed = parseMcpAxiosResponse(response.data);
+
+    if (!("result" in parsed) || !parsed.result) {
+      throw new Error(
+        "Invalid MCP response: " + JSON.stringify(parsed, null, 2)
+      );
+    }
+
+    const result = parsed.result as { tools?: McpTool[] };
+
+    if (!result.tools) {
+      throw new Error(
+        "MCP result missing tools: " + JSON.stringify(parsed, null, 2)
+      );
+    }
+
+    return result.tools;
   }
 
   // return the main doJob tool as AgentJobTool object
   async getJobTool(): Promise<AgentJobTool> {
     const tools = await this.listTools();
 
-    const tool = tools.find((t) => t.name === "doJob");
+    const tool = tools.find((t) => t.name === "classify");
 
     if (!tool) {
-      throw new Error("Agent does not expose doJob");
+      throw new Error("Agent does not expose classify");
     }
 
     return {
-      name: "doJob",
+      name: "classify",
       description: tool.description,
       inputSchema: tool.inputSchema,
       outputSchema: tool.outputSchema,
     };
   }
 
-  async callJobTool(args: JsonSchemaObject){
+  async callJobTool(args: Record<string, unknown>) {
     const tool = await this.getJobTool();
 
     const response = await axios.post(
-        this.url,
-        {
+      this.url,
+      {
         jsonrpc: "2.0",
         id: crypto.randomUUID(),
         method: "tools/call",
         params: {
-            name: tool.name,
-            arguments: args,
+          name: tool.name,
+          arguments: args,
         },
-        },
-        {
+      },
+      {
         headers: {
-            "Content-Type": "application/json",
-            "MCP-Protocol-Version": this.protocolVersion,
-            ...(this.sessionId ? { "MCP-Session-Id": this.sessionId } : {}),
+          "content-type": "application/json",
+          "accept": "application/json, text/event-stream",
+          "mcp-protocol-version": this.protocolVersion,
+          ...(this.sessionId ? { "mcp-session-id": this.sessionId } : {}),
         },
-        }
+        responseType: "text",
+      }
     );
 
-    return response.data.result;
+    const parsed = parseMcpAxiosResponse(response.data);
+
+    if (!("result" in parsed) || !parsed.result) {
+      throw new Error(
+        "Invalid MCP tools/call response: " + JSON.stringify(parsed, null, 2)
+      );
+    }
+
+    return parsed.result;
   }
 }

@@ -4,7 +4,7 @@ import { extractBase64FromDataUrl } from './utils'
 import { McpSession, type JsonSchemaObject } from "./agentComms";
 
 // MCP endpoint configuration
-const MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp";
+// const MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp";
 const MCP_PROTOCOL_VERSION = "2024-11-05";
 
 
@@ -91,8 +91,9 @@ async function parseSSEStream(
 import axios from 'axios'
 
 export interface MycaCall {
-    taskDesc: string
-    scoreThresh?: number
+    query: string
+    top_k?: number
+    modality?: string
     // optionally add more stuff we want to pass to myca
 }
 
@@ -102,7 +103,7 @@ export interface MycaResp {
 }
 
 // TODO: maybe change url endpoint? mcp route name doesn't make sense
-const MYCA_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp"
+const MYCA_URL = "https://aofbnauuix32ebcof5guv5nxai0mblkm.lambda-url.us-east-1.on.aws/route"
 
 // agent invokes this function ... so it decides what to pass as arg
 // should be strong definition of task to be completed
@@ -117,6 +118,7 @@ async function callMyca(callPayload: MycaCall): Promise<MycaResp>{
         const response = await axios.post<MycaResp>(MYCA_URL, callPayload, {
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": "dev-key"
       },
     });
 
@@ -181,9 +183,13 @@ export function createGetHelperTool() {
         // Step 1: Call myca, get myca response
         // build myca call payload
         //FIX THIS
-        const mycaCallPayload = {taskDesc: query}
-        console.log(`calling myca with payload ${mycaCallPayload}`)
+        const mycaCallPayload = {query,
+          top_k: 1,
+          modality: currentImageBase64 ? "Image" : "text",}
+        console.log(mycaCallPayload)
+
         const mycaResp = await callMyca(mycaCallPayload)
+        console.log(mycaResp)
         
         // figure out if we got a url
         // if not return early
@@ -250,25 +256,26 @@ export function createGetHelperTool() {
 
 export function createCallHelperTool() {
   return tool(
-    async ({ inArgs }: { inArgs: JsonSchemaObject }) => {
+    async ({ inArgs }: { inArgs?: Record<string, unknown> }) => {
       if (!currentHelperSession) {
-        throw new Error("No active helper session. Call get_helper_interface first.");
+        throw new Error("No active helper session. Call get_helper first.");
       }
 
-      const result = await currentHelperSession.callJobTool(
-        inArgs, 
+      const mergedArgs: Record<string, unknown> = { ...(inArgs ?? {}) };
 
-      );
+      if (currentImageBase64 && mergedArgs.img == null) {
+        mergedArgs.img = extractBase64FromDataUrl(currentImageBase64);
+      }
 
+      const result = await currentHelperSession.callJobTool(mergedArgs);
       return result;
     },
     {
       name: "call_helper",
-      description: "Call the currently selected helper agent with the provided input arguments.",
+      description:
+        "Call the currently selected helper agent. If an image was uploaded, it will be passed automatically as img.",
       schema: z.object({
-        inArgs: z.record(z.string(), z.unknown()).describe(
-          "Arguments to pass to the helper tool"
-        ),
+        inArgs: z.record(z.string(), z.unknown()).optional(),
       }),
     }
   );

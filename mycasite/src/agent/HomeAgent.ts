@@ -58,16 +58,32 @@ export class HomeAgent {
     this.lastState = state;
   }
 
+  // getMessages(): Message[] {
+  //   if (!this.lastState) return [];
+
+  //   return this.lastState.messages.map((msg) => ({
+  //     role: msg.getType() === "human" ? "user" : "assistant",
+  //     content:
+  //       typeof msg.content === "string"
+  //         ? msg.content
+  //         : JSON.stringify(msg.content),
+  //   }));
+  // }
   getMessages(): Message[] {
     if (!this.lastState) return [];
 
-    return this.lastState.messages.map((msg) => ({
-      role: msg.getType() === "human" ? "user" : "assistant",
-      content:
-        typeof msg.content === "string"
-          ? msg.content
-          : JSON.stringify(msg.content),
-    }));
+    return this.lastState.messages
+      .filter((msg) => {
+        const type = msg.getType();
+        return type === "human" || type === "ai";
+      })
+      .map((msg) => ({
+        role: msg.getType() === "human" ? "user" : "assistant",
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content),
+      }));
   }
 
   getLastImage(): string | null {
