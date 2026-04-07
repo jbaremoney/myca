@@ -2,7 +2,7 @@ import axios from "axios";
 
 const MCP_PROTOCOL_VERSION = "2025-03-26";
 
-type JsonSchemaObject = {
+export type JsonSchemaObject = {
   type: "object";
   properties?: Record<string, unknown>;
   required?: string[];
@@ -27,7 +27,7 @@ interface AgentJobTool {
 }
 
 // stateful MCP session
-class McpSession {
+export class McpSession {
   url: string;
   sessionId?: string;
   jobTool?: AgentJobTool;
@@ -129,7 +129,7 @@ class McpSession {
     };
   }
 
-  async callJobTool(args: Record<string, unknown>){
+  async callJobTool(args: JsonSchemaObject){
     const tool = await this.getJobTool();
 
     const response = await axios.post(

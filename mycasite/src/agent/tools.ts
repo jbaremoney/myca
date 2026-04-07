@@ -1,27 +1,12 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
+import { extractBase64FromDataUrl } from './utils'
+import { McpSession, type JsonSchemaObject } from "./agentComms";
 
 // MCP endpoint configuration
 const MCP_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp";
 const MCP_PROTOCOL_VERSION = "2024-11-05";
 
-// Helper function to generate UUIDs
-function generateId(): string {
-  return typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
-
-/**
- * Extract raw base64 from data URL
- * Converts "data:image/png;base64,iVBORw0KG..." to "iVBORw0KG..."
- */
-function extractBase64FromDataUrl(dataUrl: string): string {
-  if (dataUrl.includes(",")) {
-    return dataUrl.split(",")[1];
-  }
-  return dataUrl;
-}
 
 // Store for passing image context from HomeAgent to tools
 let currentImageBase64: string | null = null;
@@ -103,49 +88,53 @@ async function parseSSEStream(
   }
 }
 
-/**
- * Initialize MCP session and return session ID
- */
-async function initializeSession(): Promise<string> {
-  const initPayload = {
-    jsonrpc: "2.0",
-    id: generateId(),
-    method: "initialize",
-    params: {
-      protocolVersion: MCP_PROTOCOL_VERSION,
-      capabilities: {},
-      clientInfo: { name: "myca-browser-client", version: "0.0.1" },
-    },
-  };
+import axios from 'axios'
 
-  const headers = {
-    Accept: "text/event-stream, application/json",
-    "Content-Type": "application/json",
-    "mcp-protocol-version": MCP_PROTOCOL_VERSION,
-  };
+export interface MycaCall {
+    taskDesc: string
+    scoreThresh?: number
+    // optionally add more stuff we want to pass to myca
+}
 
-  const response = await fetch(MCP_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(initPayload),
-  });
+export interface MycaResp {
+    url: string
+    code: number
+}
 
-  if (response.status >= 400) {
-    const body = await response.text();
-    throw new Error(
-      `Initialize failed: ${response.status}\nHeaders: ${JSON.stringify(Object.fromEntries(response.headers))}\nBody: ${body.slice(0, 500)}`
-    );
-  }
+// TODO: maybe change url endpoint? mcp route name doesn't make sense
+const MYCA_URL = "https://wymdcqx7mp.us-east-1.awsapprunner.com/mcp"
 
-  const sessionId = response.headers.get("mcp-session-id");
-  if (!sessionId) {
-    throw new Error("Initialize succeeded but no mcp-session-id header returned");
-  }
+// agent invokes this function ... so it decides what to pass as arg
+// should be strong definition of task to be completed
+// just calls myca and returns the metadata needed
 
-  // Read the initialization response
-  await parseSSEStream(response);
+let currentHelperSession: McpSession | null = null;
 
-  return sessionId;
+async function callMyca(callPayload: MycaCall): Promise<MycaResp>{
+
+    try {
+        // 1. call myca to get endpoint
+        const response = await axios.post<MycaResp>(MYCA_URL, callPayload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const code = response.data.url?.length ? 201 : 301;
+    
+    // just return response data even if no one found
+    // what does myca return if match score below threshold? 
+
+    return {url: response.data.url, code: code}
+ 
+    }
+
+    // TODO: make codes make sense
+    catch (error){
+        console.error(error)
+        return {url: "", code: 400}
+    }
+
 }
 
 /**
@@ -178,10 +167,10 @@ async function rpcCallSSE(
   return parseSSEStream(response);
 }
 
-export function createCallMycaTool(_apiKey?: string) {
+export function createGetHelperTool() {
   return tool(
     async ({ query }: { query: string }) => {
-      console.log("=== CALL_MYCA_TOOL INVOKED (MCP Protocol) ===");
+      console.log("=== GET_HELPER_TOOL INVOKED ===");
       console.log("Query:", query);
       console.log("Has image:", !!currentImageBase64);
 
@@ -189,52 +178,49 @@ export function createCallMycaTool(_apiKey?: string) {
       lastToolPrompt = query;
 
       try {
-        // Step 1: Initialize MCP session
-        console.log("Initializing MCP session...");
-        const sessionId = await initializeSession();
-        console.log("Session ID:", sessionId);
-
-        // Step 2: Call tools/list to see available tools
-        console.log("Listing available tools...");
-        const toolsListPayload = {
-          jsonrpc: "2.0",
-          id: generateId(),
-          method: "tools/list",
-        };
-        const toolsResp = await rpcCallSSE(sessionId, toolsListPayload);
-        console.log("Available tools:", toolsResp);
-
-        // Step 3: Call tools/call with classify method and image
-        if (!currentImageBase64) {
-          return JSON.stringify({
-            error: "No image provided",
-            message: "Image is required for classification",
-          });
+        // Step 1: Call myca, get myca response
+        // build myca call payload
+        //FIX THIS
+        const mycaCallPayload = {taskDesc: query}
+        console.log(`calling myca with payload ${mycaCallPayload}`)
+        const mycaResp = await callMyca(mycaCallPayload)
+        
+        // figure out if we got a url
+        // if not return early
+        if (mycaResp.code >= 400) {
+          throw new Error("Myca returned an error");
         }
 
-        console.log("Calling classify tool with image...");
-        const cleanBase64 = extractBase64FromDataUrl(currentImageBase64);
-        const callPayload = {
-          jsonrpc: "2.0",
-          id: generateId(),
-          method: "tools/call",
-          params: {
-            name: "classify",
-            arguments: {
-              img: cleanBase64,
-            },
-          },
-        };
+        if (mycaResp.code >= 300) {
+          throw new Error("No matching agent found");
+        }
+        const url = mycaResp.url
+        
+        // Step 2: MCP handshake with helper agent 
+        console.log("Initializing MCP handshake");
+        const mcpSession = new McpSession(url);
+        await mcpSession.initialize(); // sets session id
 
-        const classifyResp = await rpcCallSSE(sessionId, callPayload);
-        console.log("Classify response:", classifyResp);
+        // Step 3: Get tool id, schema
+        const tool = await mcpSession.getJobTool()
+        
+        if (tool != null){
+          currentHelperSession = mcpSession;
+          
+          return {
+          helperUrl: url,
+          toolName: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+          outputSchema: tool.outputSchema,
+          }; // should have schema, etc
+        }
 
-        return JSON.stringify({
-          source: "mcp_endpoint",
-          query,
-          response: classifyResp,
-          sessionId,
-        });
+        else {
+          // didn't find valid tool name, default to first one
+          return "NO VALID TOOL NAME"
+        }
+        
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : "Unknown error occurred";
@@ -260,3 +246,30 @@ export function createCallMycaTool(_apiKey?: string) {
   );
 }
 
+
+
+export function createCallHelperTool() {
+  return tool(
+    async ({ inArgs }: { inArgs: JsonSchemaObject }) => {
+      if (!currentHelperSession) {
+        throw new Error("No active helper session. Call get_helper_interface first.");
+      }
+
+      const result = await currentHelperSession.callJobTool(
+        inArgs, 
+
+      );
+
+      return result;
+    },
+    {
+      name: "call_helper",
+      description: "Call the currently selected helper agent with the provided input arguments.",
+      schema: z.object({
+        inArgs: z.record(z.string(), z.unknown()).describe(
+          "Arguments to pass to the helper tool"
+        ),
+      }),
+    }
+  );
+}

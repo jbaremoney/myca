@@ -1,7 +1,7 @@
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
-import { createCallMycaTool, setCurrentImage } from "./tools";
+import { createGetHelperTool, createCallHelperTool, setCurrentImage } from "./tools";
 
 export interface Message {
   role: "user" | "assistant";
@@ -23,7 +23,7 @@ export class HomeAgent {
 
     this.agent = createReactAgent({
       llm,
-      tools: [createCallMycaTool(apiKey)],
+      tools: [createGetHelperTool(), createCallHelperTool()],
     });
   }
 
