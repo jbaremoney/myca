@@ -1,17 +1,80 @@
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { BaseMessage, HumanMessage } from "@langchain/core/messages";
-import { createGetHelperTool, createCallHelperTool, setCurrentImage } from "./tools";
+import { createGetHelperTool, createCallHelperTool, setCurrentImage, setCurrentUserPrompt } from "./tools";
+// export interface Message {
+//   role: "user" | "assistant";
+//   content: string;
+// }
+
+export interface AgentInfo {
+  dataset?: string;
+  agentName?: string;
+  predictedLabel?: string;
+  classIndex?: number;
+  probabilities?: Record<string, number>;
+  disclaimer?: string;
+}
 
 export interface Message {
   role: "user" | "assistant";
   content: string;
+  agentInfo?: AgentInfo | null;
+}
+
+function safeParseJson(value: unknown): any | null {
+  if (typeof value !== "string") return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function extractText(content: unknown): string {
+  if (typeof content === "string") return content;
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part) {
+          return String((part as any).text ?? "");
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return "";
+}
+
+function extractAgentInfoFromToolMessage(msg: any): AgentInfo | null {
+  if (!msg || msg.type !== "tool") return null;
+  if (msg.name !== "call_myca") return null;
+
+  const parsed = safeParseJson(msg.content);
+  if (!parsed) return null;
+
+  const sc = parsed.structuredContent;
+  if (!sc) return null;
+
+  return {
+    dataset: sc.dataset,
+    agentName: sc.agent_name,
+    predictedLabel: sc.predicted_label,
+    classIndex: sc.class_index,
+    probabilities: sc.probabilities,
+    disclaimer: sc.disclaimer,
+  };
 }
 
 export class HomeAgent {
   private agent: ReturnType<typeof createReactAgent> | null = null;
   private lastState: { messages: BaseMessage[] } | null = null;
   private lastImage: string | null = null;
+  
 
   initialize(apiKey: string) {
     if (this.agent) return;
@@ -39,6 +102,7 @@ export class HomeAgent {
     // Store image and set it in tools context
     this.lastImage = imageBase64 || null;
     setCurrentImage(imageBase64 || null);
+    setCurrentUserPrompt(prompt);
 
     // Pass full conversation history so the agent has chat memory.
     // LangGraph updates state during a run but does NOT carry state between invocations
@@ -58,6 +122,7 @@ export class HomeAgent {
     this.lastState = state;
   }
 
+  //USE THIS CODE TO DEBUG WHAT MESSAGES THE AGENT IS SEEING AND RESPONDING WITH - IT INCLUDES ALL MESSAGES INCLUDING TOOL CALLS
   // getMessages(): Message[] {
   //   if (!this.lastState) return [];
 
@@ -69,21 +134,54 @@ export class HomeAgent {
   //         : JSON.stringify(msg.content),
   //   }));
   // }
+
+  //USE THIS CODE TO ONLY SEE THE MESSAGES BETWEEN THE USER AND AGENT, NOT INCLUDING TOOL CALLS
+  // getMessages(): Message[] {
+  //   if (!this.lastState) return [];
+
+  //   return this.lastState.messages
+  //     .filter((msg) => {
+  //       return msg.type === "human" || msg.type === "ai";
+  //     })
+  //     .map((msg) => ({
+  //       role: msg.type === "human" ? "user" : "assistant",
+  //       content:
+  //         typeof msg.content === "string"
+  //           ? msg.content
+  //           : JSON.stringify(msg.content),
+  //     }));
+  // }
   getMessages(): Message[] {
     if (!this.lastState) return [];
 
-    return this.lastState.messages
-      .filter((msg) => {
-        const type = msg.getType();
-        return type === "human" || type === "ai";
-      })
-      .map((msg) => ({
-        role: msg.getType() === "human" ? "user" : "assistant",
-        content:
-          typeof msg.content === "string"
-            ? msg.content
-            : JSON.stringify(msg.content),
-      }));
+    const visibleMessages: Message[] = [];
+
+    for (let i = 0; i < this.lastState.messages.length; i++) {
+      const msg: any = this.lastState.messages[i];
+
+      if (msg.type === "human") {
+        visibleMessages.push({
+          role: "user",
+          content: extractText(msg.content),
+          agentInfo: null,
+        });
+      }
+
+      if (msg.type === "ai") {
+        const previousMsg = i > 0 ? this.lastState.messages[i - 1] : null;
+        const agentInfo = extractAgentInfoFromToolMessage(previousMsg);
+
+        visibleMessages.push({
+          role: "assistant",
+          content: extractText(msg.content),
+          agentInfo,
+        });
+      }
+    }
+
+    return visibleMessages.filter(
+      (msg) => Boolean(msg.content || msg.agentInfo)
+    );
   }
 
   getLastImage(): string | null {

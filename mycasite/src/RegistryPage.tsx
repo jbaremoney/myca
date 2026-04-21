@@ -231,7 +231,7 @@ export default function RegistryPage({ onBack }: RegistryPageProps) {
           )}
         </div>
 
-        <div className="registry-panel">
+        {/* <div className="registry-panel">
           <h2>Selected Agent</h2>
 
           {!selectedAgent ? (
@@ -284,7 +284,7 @@ export default function RegistryPage({ onBack }: RegistryPageProps) {
               </button>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

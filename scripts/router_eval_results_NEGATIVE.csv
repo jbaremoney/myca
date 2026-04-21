@@ -1,0 +1,18 @@
+prompt,type,expected,returned_url
+What is the weather today?,negative,,NONE
+Write a Python function for sorting,negative,,NONE
+Explain how databases work,negative,,NONE
+Who won the Super Bowl?,negative,,NONE
+Translate this sentence to Spanish,negative,,NONE
+Help me plan my college schedule,negative,,NONE
+What is machine learning?,negative,,https://iffzub9gc3.us-east-1.awsapprunner.com/mcp
+Generate a resume for me,negative,,NONE
+What is the capital of France?,negative,,NONE
+Write a Java program to reverse a string,negative,,NONE
+Explain how the internet works,negative,,NONE
+Give me a workout plan,negative,,NONE
+k,negative,,NONE
+choolskdn,negative,,NONE
+Hidiididid,negative,,NONE
+Hwooowwwwoow,negative,,NONE
+ kdkd,negative,,NONE

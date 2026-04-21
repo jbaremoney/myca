@@ -554,3 +554,34 @@
     color: rgba(0, 0, 0, 0.5);
   }
 }
+.agent-info-dropdown {
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 8px;
+}
+
+.agent-info-dropdown summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+  list-style: none;
+}
+
+.agent-info-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-info-card {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.agent-info-card p {
+  margin: 6px 0;
+  word-break: break-word;
+}

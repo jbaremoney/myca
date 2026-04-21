@@ -132,7 +132,7 @@
 /* Layout */
 .registry-layout {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  /* grid-template-columns: 1.2fr 1fr; */
   gap: 1.5rem;
   flex: 1;
   overflow: hidden;

@@ -25,36 +25,39 @@ for t in tests:
     )
     resp.raise_for_status()
     data = resp.json()
+    url = data.get("url")
+    if url == "":
+        url = "NONE"
+    # candidates = data.get("candidates", [])
+    # top1 = candidates[0] if len(candidates) > 0 else None
+    # top2 = candidates[1] if len(candidates) > 1 else None
 
-    candidates = data.get("candidates", [])
-    top1 = candidates[0] if len(candidates) > 0 else None
-    top2 = candidates[1] if len(candidates) > 1 else None
+    # top_agent = top1["agent_id"] if top1 else None
+    # top_score = top1["score"] if top1 else None
+    # second_score = top2["score"] if top2 else None
+    # margin = (top_score - second_score) if top_score is not None and second_score is not None else None
 
-    top_agent = top1["agent_id"] if top1 else None
-    top_score = top1["score"] if top1 else None
-    second_score = top2["score"] if top2 else None
-    margin = (top_score - second_score) if top_score is not None and second_score is not None else None
-
-    correct = None
-    if t["expected"] is None:
-        correct = None
-    else:
-        correct = (top_agent == t["expected"])
+    # correct = None
+    # if t["expected"] is None:
+    #     correct = None
+    # else:
+    #     correct = (top_agent == t["expected"])
 
     rows.append({
         "prompt": t["prompt"],
         "type": t["type"],
         "expected": t["expected"],
-        "top_agent": top_agent,
-        "top_score": top_score,
-        "second_score": second_score,
-        "margin": margin,
-        "correct": correct,
+        "returned_url": url,
+        # "top_agent": top_agent,
+        # "top_score": top_score,
+        # "second_score": second_score,
+        # "margin": margin,
+        # "correct": correct,
     })
 
-with open("router_eval_results.csv", "w", newline="", encoding="utf-8") as f:
+with open("router_eval_results_NEGATIVE.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=rows[0].keys())
     writer.writeheader()
     writer.writerows(rows)
 
-print("Wrote router_eval_results.csv")
+print("Wrote router_eval_results_NEGATIVE.csv")

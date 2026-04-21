@@ -14,7 +14,7 @@ _classifier = PneumClassifier()
 
 @mcp.tool()
 def classify(img: str) -> dict:
-    """Classify a base64-encoded DermaMNIST image."""
+    """Classify a base64-encoded PneumoniaMNIST image."""
     return _classifier.classify_image(img)
 
 # Simple health endpoint for curl / App Runner checks

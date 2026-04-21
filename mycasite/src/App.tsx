@@ -257,6 +257,46 @@ function App() {
             <div key={idx} className={`chat-message ${msg.role}`}>
               <div className="message-content">
                 {msg.content}
+
+                {msg.agentInfo && (
+                  <details className="agent-info-dropdown">
+                    <summary>View routed agent info</summary>
+                    <div className="agent-info-card">
+                      {msg.agentInfo.agentName && (
+                        <p><strong>Agent:</strong> {msg.agentInfo.agentName}</p>
+                      )}
+
+                      {msg.agentInfo.dataset && (
+                        <p><strong>Dataset:</strong> {msg.agentInfo.dataset}</p>
+                      )}
+
+                      {/* {msg.agentInfo.predictedLabel && (
+                        <p><strong>Prediction:</strong> {msg.agentInfo.predictedLabel}</p>
+                      )}
+
+                      {typeof msg.agentInfo.classIndex === "number" && (
+                        <p><strong>Class Index:</strong> {msg.agentInfo.classIndex}</p>
+                      )}
+
+                      {msg.agentInfo.probabilities && (
+                        <div>
+                          <strong>Probabilities:</strong>
+                          <ul>
+                            {Object.entries(msg.agentInfo.probabilities).map(([label, prob]) => (
+                              <li key={label}>
+                                {label}: {(prob * 100).toFixed(2)}%
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )} */}
+
+                      {msg.agentInfo.disclaimer && (
+                        <p><strong>Disclaimer:</strong> {msg.agentInfo.disclaimer}</p>
+                      )}
+                    </div>
+                  </details>
+                )}
               </div>
             </div>
           ))

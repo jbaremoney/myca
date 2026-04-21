@@ -26,6 +26,16 @@ export function getLastToolPrompt(): string | null {
   return lastToolPrompt;
 }
 
+let currentUserPrompt: string | null = null;
+
+export function setCurrentUserPrompt(prompt: string | null) {
+  currentUserPrompt = prompt;
+}
+
+export function getCurrentUserPrompt(): string | null {
+  return currentUserPrompt;
+}
+
 /**
  * Helper function to parse SSE (Server-Sent Events) stream and extract first JSON object
  */
@@ -169,85 +179,146 @@ async function rpcCallSSE(
   return parseSSEStream(response);
 }
 
+// export function createGetHelperTool() {
+//   return tool(
+//     async ({ query }: { query: string }) => {
+//       console.log("=== GET_HELPER_TOOL INVOKED ===");
+//       console.log("Query:", query);
+//       console.log("Has image:", !!currentImageBase64);
+
+//       // Store the prompt that the agent used
+//       lastToolPrompt = query;
+
+//       try {
+//         // Step 1: Call myca, get myca response
+//         // build myca call payload
+//         //FIX THIS
+//         const mycaCallPayload = {query,
+//           top_k: 1,
+//           modality: currentImageBase64 ? "Image" : "text",}
+//         console.log(mycaCallPayload)
+
+//         const mycaResp = await callMyca(mycaCallPayload)
+//         console.log(mycaResp)
+        
+//         // figure out if we got a url
+//         // if not return early
+//         if (mycaResp.code >= 400) {
+//           throw new Error("Myca returned an error");
+//         }
+
+//         if (mycaResp.code >= 300) {
+//           throw new Error("No matching agent found");
+//         }
+//         const url = mycaResp.url
+        
+//         // Step 2: MCP handshake with helper agent 
+//         console.log("Initializing MCP handshake");
+//         const mcpSession = new McpSession(url);
+//         await mcpSession.initialize(); // sets session id
+
+//         // Step 3: Get tool id, schema
+//         const tool = await mcpSession.getJobTool()
+        
+//         if (tool != null){
+//           currentHelperSession = mcpSession;
+          
+//           return {
+//           helperUrl: url,
+//           toolName: tool.name,
+//           description: tool.description,
+//           inputSchema: tool.inputSchema,
+//           outputSchema: tool.outputSchema,
+//           }; // should have schema, etc
+//         }
+
+//         else {
+//           // didn't find valid tool name, default to first one
+//           return "NO VALID TOOL NAME"
+//         }
+        
+//       } catch (err) {
+//         const errorMsg =
+//           err instanceof Error ? err.message : "Unknown error occurred";
+//         console.error("MCP call failed:", errorMsg);
+//         return JSON.stringify({
+//           error: "MCP call failed",
+//           message: errorMsg,
+//         });
+//       }
+//     },
+//     {
+//       name: "call_myca",
+//       description:
+//         "Call the MYCA MCP endpoint to classify an image. Handles session initialization, tool listing, and image classification via the MCP protocol. You don't need to know or see anything about the image. Just call the tool.",
+//       schema: z.object({
+//         query: z
+//           .string()
+//           .describe(
+//             "The question/query to provide as context for classification"
+//           ),
+//       }),
+//     }
+//   );
+// }
+
 export function createGetHelperTool() {
   return tool(
-    async ({ query }: { query: string }) => {
+    async () => {
+      const query = getCurrentUserPrompt() ?? "";
+
       console.log("=== GET_HELPER_TOOL INVOKED ===");
-      console.log("Query:", query);
+      console.log("Raw user query:", query);
       console.log("Has image:", !!currentImageBase64);
 
-      // Store the prompt that the agent used
       lastToolPrompt = query;
 
       try {
-        // Step 1: Call myca, get myca response
-        // build myca call payload
-        //FIX THIS
-        const mycaCallPayload = {query,
+        const mycaCallPayload = {
+          query,
           top_k: 1,
-          modality: currentImageBase64 ? "Image" : "text",}
-        console.log(mycaCallPayload)
+          modality: currentImageBase64 ? "Image" : "Text",
+        };
 
-        const mycaResp = await callMyca(mycaCallPayload)
-        console.log(mycaResp)
-        
-        // figure out if we got a url
-        // if not return early
+        const mycaResp = await callMyca(mycaCallPayload);
+        console.log("MYCA response:", mycaResp);
+
         if (mycaResp.code >= 400) {
           throw new Error("Myca returned an error");
         }
 
-        if (mycaResp.code >= 300) {
+        if (mycaResp.code >= 300 || !mycaResp.url) {
           throw new Error("No matching agent found");
         }
-        const url = mycaResp.url
-        
-        // Step 2: MCP handshake with helper agent 
-        console.log("Initializing MCP handshake");
-        const mcpSession = new McpSession(url);
-        await mcpSession.initialize(); // sets session id
 
-        // Step 3: Get tool id, schema
-        const tool = await mcpSession.getJobTool()
-        
-        if (tool != null){
-          currentHelperSession = mcpSession;
-          
-          return {
-          helperUrl: url,
-          toolName: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema,
-          outputSchema: tool.outputSchema,
-          }; // should have schema, etc
+        const mcpSession = new McpSession(mycaResp.url);
+        await mcpSession.initialize();
+
+        currentHelperSession = mcpSession;
+
+        const args: Record<string, unknown> = {};
+        if (currentImageBase64) {
+          args.img = extractBase64FromDataUrl(currentImageBase64);
         }
 
-        else {
-          // didn't find valid tool name, default to first one
-          return "NO VALID TOOL NAME"
-        }
-        
+        const result = await mcpSession.callJobTool(args);
+        return result;
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : "Unknown error occurred";
         console.error("MCP call failed:", errorMsg);
-        return JSON.stringify({
+
+        return {
           error: "MCP call failed",
           message: errorMsg,
-        });
+        };
       }
     },
     {
       name: "call_myca",
       description:
-        "Call the MYCA MCP endpoint to classify an image. Handles session initialization, tool listing, and image classification via the MCP protocol. You don't need to know or see anything about the image. Just call the tool.",
-      schema: z.object({
-        query: z
-          .string()
-          .describe(
-            "The question/query to provide as context for classification"
-          ),
-      }),
+        "Route the current user request to the correct helper agent and complete the helper tool call using the literal user message.",
+      schema: z.object({}),
     }
   );
 }

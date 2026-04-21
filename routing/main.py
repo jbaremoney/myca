@@ -350,6 +350,13 @@ def route(req: RouteRequest, x_api_key: str | None = Header(default=None)):
         if top_score >= REJECT_THRESHOLD:
             best_url = top_candidate["mcp_url"]
 
+    print("route query:", req.query)
+    print("route modality:", req.modality)
+    print("candidates:", candidates)
+    print("top distance:", candidates[0]["distance"] if candidates else None)
+    print("top score:", candidates[0]["score"] if candidates else None)
+    print("returning url:", best_url)
+
     return {"url": best_url}
 
 handler = Mangum(app)
