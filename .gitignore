@@ -10,7 +10,7 @@ mycasite/dist/
 mycasite/.env
 mycasite/.env.local
 mycasite/.env.*.local
-
+*.DS_Store
 
 
 # Vite / build
